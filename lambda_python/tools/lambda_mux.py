@@ -67,6 +67,7 @@ def main():
     parser = ArgumentParser(description='Script description', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Be verbose')
     parser.add_argument('-l', '--list', dest='list', action='store_true', help='List available FTDI devices')
+    parser.add_argument('-d', '--device', dest='device', help='FTDI device to use', default='ftdi://ftdi:232:JTAG_Sel/1')
     parser.add_argument(dest='position', type=int, choices=[0,1,2,3], nargs='?', help='Position to set the mux to')
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
@@ -77,8 +78,7 @@ def main():
 
       
     if args.list:
-        devices = Ftdi.list_devices()
-        print(devices)
+        Ftdi.show_devices()
         return
 
     port = args.position
@@ -98,7 +98,7 @@ def main():
         #      value |= (Port&0x3)<<2;
         #      ftStatus = FT_SetBitMode(ftHandleB,value,0x20);
         ftdi = Ftdi()
-        ftdi.open_from_url('ftdi://::JTAG_Sel/1') # open with serial number="JTAG_Sel"
+        ftdi.open_from_url(args.device) # open with serial number="JTAG_Sel"
         assert ftdi.has_cbus
         #eeprom = FtdiEeprom()
         #eeprom.connect(ftdi)
