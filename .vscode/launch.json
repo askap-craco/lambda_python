@@ -22,6 +22,15 @@
             "program": "${workspaceFolderBasename}/tools/lambda_config.py",
             "console": "integratedTerminal",
             "args": "--raw-payload 0x000001DEADFACE00AABBCCDDEEFF0000000000000000"
+        },
+        {
+            "name": "lambda_mux",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolderBasename}/tools/lambda_mux.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": "--list"
         }
     ]
 }

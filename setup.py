@@ -19,6 +19,13 @@ class BuildExeCommand(Command):
             'pyinstaller', '--onefile', 'lambda_python/tools/lambda_config.py'
         ])
 
+        try:
+            subprocess.check_call([
+                'sudo', 'setcap', 'cap_net_raw=ep', './dist/lambda_config'
+            ])
+        except subprocess.CalledProcessError as e:
+            log.info(f'Failed to set permissions: {e}')
+            log.info('You may need to run `sudo setcap cap_net_raw=ep ./dist/lambda_config`')
 setup(
     name='lambda_python',
     version='0.1.0',
@@ -45,7 +52,8 @@ setup(
         'pandas',
         'matplotlib',
         'scapy',
-        'netifaces'
+        #'netifaces', Requires python dev
+        'pyftdi'
     ],
     entry_points={
         'console_scripts': [

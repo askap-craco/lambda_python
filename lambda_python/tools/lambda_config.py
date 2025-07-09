@@ -36,9 +36,9 @@ __author__ = "Keith Bannister <keith.bannister@csiro.au>"
 
 log = logging.getLogger(__name__)
 
-DEFAULT_INTERFACE = os.environ.get('LAMBDA_INTERFACE', '')
-DEFAULT_IP = os.environ.get('LAMBDA_IP', '')
-DEFAULT_MAC = os.environ.get('LAMBDA_MAC', '')
+DEFAULT_INTERFACE = os.environ.get('LAMBDA_INTERFACE', 'enp175s0np0')
+DEFAULT_IP = os.environ.get('LAMBDA_IP', '192.168.1.10')
+DEFAULT_MAC = os.environ.get('LAMBDA_MAC', '00:11:22:33:44:55')
 
 def tobytes(s:str):
     '''
@@ -105,23 +105,32 @@ def main():
     # Conver tdata to bytes
     # if it starts with 0x, assume it's hex.
     # otherwise convert to UTF-8 bytes
+    if len(args.values) == 0:
+        print('No data provided')
+        return 
+
+    if args.interface == '':
+        print('No interface provided')
+        return
+
     data = parse_values(args.values)
 
     if got_netifaces:
         src_ip = ni.ifaddresses(args.interface)[ni.AF_INET][0]['addr']
-        src_mac = '0c:42:a1:55:c4:3a'
+        src_mac = '0c:42:a1:55:c4:5a'
     else:
-        src_ip = '192.168.21.1'
-        src_mac = '0c:42:a1:55:c4:3a'
+        src_ip = '192.168.1.1'
+        src_mac = '0c:42:a1:55:c4:5a' # enp175s0np0 on blackmesa
     
-    src_port = 1234
-    dst_port = 1234
+    src_port = 2222
+    dst_port = 3333
     
     # Create a packet
     # Send the packet
     log.info(f'Sending {len(data)} byte payload')
-    packet = Ether(src=src_mac)/IP(src=src_ip)/UDP(sport=src_port, dport=dst_port)/Raw(load=data)
+    packet = Ether(src=src_mac, dst=args.mac)/IP(src=src_ip, dst=args.ip)/UDP(sport=src_port, dport=dst_port)/Raw(load=data)
     hexdump(packet)
+    print(packet.summary(), 'data', data.hex(), 'len', len(data), 'to', args.interface)
     sendp(packet, iface=args.interface)
 
     

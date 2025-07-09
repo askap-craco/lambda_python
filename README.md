@@ -2,8 +2,13 @@
 Python utilities for LAMBDA project
 
 # building the lambda_config tool so it can send raw ethernet frames
+You need `sudo setcap cap_net_raw=ep` permissions
+
+```
 python setup.py build_exe
-sudo setcap cap_net_raw+ep ./dist/lambda_config
+sudo setcap cap_net_raw=ep ./dist/lambda_config
+```
+
 
 
 # Development
