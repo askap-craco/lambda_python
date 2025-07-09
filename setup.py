@@ -1,6 +1,8 @@
 from setuptools import setup, find_packages, Command
 import subprocess
+import logging
 
+log = logging.getLogger(__name__)
 
 # need to build exec so you can ssudo setcap it so it can be run without sudo
 
@@ -19,13 +21,18 @@ class BuildExeCommand(Command):
             'pyinstaller', '--onefile', 'lambda_python/tools/lambda_config.py'
         ])
 
+        log.info('You may need to run `sudo setcap cap_net_raw=ep ./dist/lambda_config`')
+
+        '''
         try:
+            log.info('Setting permissions for lambda_config')
             subprocess.check_call([
                 'sudo', 'setcap', 'cap_net_raw=ep', './dist/lambda_config'
             ])
         except subprocess.CalledProcessError as e:
             log.info(f'Failed to set permissions: {e}')
             log.info('You may need to run `sudo setcap cap_net_raw=ep ./dist/lambda_config`')
+        '''
 setup(
     name='lambda_python',
     version='0.1.0',
