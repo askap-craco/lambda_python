@@ -53,6 +53,7 @@ import numpy as np
 import os
 import sys
 import logging
+import time
 from pyftdi.gpio import GpioController, GpioException, Ftdi
 
 log = logging.getLogger(__name__)
@@ -99,15 +100,15 @@ def main():
         ftdi = Ftdi()
         ftdi.open_from_url('ftdi://::JTAG_Sel/1') # open with serial number="JTAG_Sel"
         assert ftdi.has_cbus
-        eeprom = FtdiEeprom()
-        eeprom.connect(ftdi)
-        print('cbus mask', hex(eeprom.cbus_mask))
-        ftdi.set_bitmode(0xf0, 0x20) # ftStatus = FT_SetBitMode(ftHandleB,0xf0,0x20); 
+        #eeprom = FtdiEeprom()
+        #eeprom.connect(ftdi)
+        #print('cbus mask', hex(eeprom.cbus_mask))
+        ftdi.set_bitmode(0xf0, Ftdi.BitMode.CBUS) # ftStatus = FT_SetBitMode(ftHandleB,0xf0,0x20); 
         time.sleep(0.05)
-        ftdi.set_bitmode(value, 0x20) # ftStatus = FT_SetBitMode(ftHandleB,value,0x20);
+        ftdi.set_bitmode(value, Ftdi.BitMode.CBUS) # ftStatus = FT_SetBitMode(ftHandleB,value,0x20);
         time.sleep(0.05)
         print(f"Mux set to position {port}={port_map[port]} with value 0x{value:02x}")
-        gpio.close()
+        
     except GpioException as e:
         print("Error communicating with FTDI device:", e)
         sys.exit(1)
