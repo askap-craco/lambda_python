@@ -23,6 +23,7 @@ Copyright (C) CSIRO 2025
 import os
 import sys
 import logging
+import socket
 from scapy.all import *
 
 try:
@@ -95,6 +96,7 @@ def main():
     parser.add_argument('--ip', dest='ip', help='IP address', default=DEFAULT_IP)
     parser.add_argument('--mac', dest='mac', help='MAC address', default=DEFAULT_MAC)
     parser.add_argument('values', help='Either 1 big string sent verbatim, or a list to parse and send as 32 bit ints as hex or decimal e.g 0x1 0xabcd', nargs='*')
+    parser.add_argument('--raw', dest='raw', action='store_true', help='Send data over raw socket - requires mac address cap_net_raw which requires sudo setcap cap_net_raw=ep ./dist/lambda_config')
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
     if args.verbose:
@@ -128,11 +130,23 @@ def main():
     # Create a packet
     # Send the packet
     log.info(f'Sending {len(data)} byte payload')
-    packet = Ether(src=src_mac, dst=args.mac)/IP(src=src_ip, dst=args.ip)/UDP(sport=src_port, dport=dst_port)/Raw(load=data)
-    hexdump(packet)
-    print(packet.summary(), 'data', data.hex(), 'len', len(data), 'to', args.interface)
-    sendp(packet, iface=args.interface)
-
+    if args.raw:
+        try:
+            packet = Ether(src=src_mac, dst=args.mac)/IP(src=src_ip, dst=args.ip)/UDP(sport=src_port, dport=dst_port)/Raw(load=data)
+            hexdump(packet)
+            print(packet.summary(), 'data', data.hex(), 'len', len(data), 'to', args.interface)
+            sendp(packet, iface=args.interface)
+        except PermissionError as e:
+            log.error(f'Error sending packet: {e}')
+            log.error(f'''Could not open raw socket. Insufficient permissions.
+             Try running: sudo setcap cap_net_raw=ep {sys.argv[0]} or running without --raw.
+             Youll need to set arp entires with 
+             sudo ip neigh add <IP_ADDRESS> lladdr <MAC_ADDRESS> dev <INTERFACE> 
+             (or use 'replace' instead of 'add')''')
+            return
+    else:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(data, (args.ip, dst_port))
     
 
 
