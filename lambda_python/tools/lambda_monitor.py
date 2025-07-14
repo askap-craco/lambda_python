@@ -39,6 +39,8 @@ import socket
 __author__ = "Keith Bannister <keith.bannister@csiro.au>"
 
 LAMBDA_MONITOR_PORT = 12345
+NUM_REGISTERS = 32
+NUM_SAMPLES = 512
 
 log = logging.getLogger(__name__)
 
@@ -58,9 +60,9 @@ def parse_packet(data:bytes):
     magic_number, fpga_id, packet_sequence_number, adc_lane = struct.unpack(hdr_format, data[0:hdr_size])
 
     state = np.frombuffer(data[hdr_size:hdr_size+4*32], dtype=np.uint32)
-    assert len(state) == 32, f"Expected 32 state words, got {len(state)}"
-    samples = np.frombuffer(data[hdr_size+4*32:], dtype=np.int16)
-    assert len(samples) == 512, f"Expected 512 samples, got {len(samples)}"
+    assert len(state) == NUM_REGISTERS, f"Expected {NUM_REGISTERS} state words, got {len(state)}"
+    samples = np.frombuffer(data[hdr_size+4*NUM_REGISTERS:], dtype=np.int16)
+    assert len(samples) == NUM_SAMPLES, f"Expected {NUM_SAMPLES} samples, got {len(samples)}"
     return LambdaMonitorPacket(magic_number, fpga_id, packet_sequence_number, adc_lane, state, samples)
 
 
@@ -69,7 +71,7 @@ def main():
     parser = ArgumentParser(description='Script description', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Be verbose')
     parser.add_argument('-p', '--port', type=int, help='UDP port number to listen on', default=LAMBDA_MONITOR_PORT)
-    parser.add_argment('-f','--fpga-id', type=int, help='FPGA ID to listen to. Others are ignored', default=0)
+    parser.add_argument('-f','--fpga-id', type=int, help='FPGA ID to listen to. Others are ignored', default=0)
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
     if args.verbose:
@@ -94,13 +96,13 @@ def main():
         last_packet = latest_packets.get(pkt.adc_lane, None)
 
         if last_packet is None:
-            print(f'{addr[0]}{addr:1}/f{pkt.fpga_id} PSN {pkt.packet_sequence_number} registers:', map(hex, pkt.state))
+            print(f'{addr[0]}:{addr[1]}/f{pkt.fpga_id} PSN:{pkt.packet_sequence_number} registers:', map(hex, pkt.state))
             adc_lines[pkt.adc_lane] = fig.plot(pkt.samples, label=f'FPGA {pkt.fpga_id}')
         else: # seen this FPGA before
             # only print differences in state
-            for i in range(32):
+            for i in range(NUM_REGISTERS):
                 if pkt.state[i] != last_packet.state[i]:
-                    print(f'{addr[0]}{addr:1}/f{pkt.fpga_id} PSN {pkt.packet_sequence_number} register {i} changed from {last_packet.state[i]:08x} to {pkt.state[i]:08x}')
+                    print(f'{addr[0]}:{addr[1]}/f{pkt.fpga_id} PSN:{pkt.packet_sequence_number} reg[{i}]{i}:{last_packet.state[i]:08x} -> {pkt.state[i]:08x}')
 
             adc_lines[pkt.adc_lane].set_data(pkt.samples)
 
