@@ -67,7 +67,7 @@ def main():
     parser = ArgumentParser(description='Script description', formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Be verbose')
     parser.add_argument('-l', '--list', dest='list', action='store_true', help='List available FTDI devices')
-    parser.add_argument('-d', '--device', dest='device', help='FTDI device to use', default='ftdi://ftdi:232:JTAG_Sel/1')
+    parser.add_argument('-d', '--device', dest='device', help='FTDI device to use. Use -l to list devices', default='ftdi://ftdi:232:JTAG_Sel/1')
     parser.add_argument(dest='position', type=int, choices=[0,1,2,3], nargs='?', help='Position to set the mux to')
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
@@ -92,7 +92,7 @@ def main():
         # 
         # setbitmode(0xf0, 0x20) # enables the mode.
         # then
-        # setbitmode(value, 0x20)
+        # setbitmode(value, 0x20) # sets the mux to the desired position
         # ftStatus = FT_SetBitMode(ftHandleB,0xf0,0x20);  #0xc0 - c3,c2 outputs; c1,c0 inputs, 0x20 - CBUS BitBang
         #       value = 0xc0;
         #      value |= (Port&0x3)<<2;
